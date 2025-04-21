@@ -1,7 +1,7 @@
 pub mod falling_piece;
 pub mod next_queue;
 
-use rand::{rngs::ThreadRng, thread_rng};
+use rand::Rng;
 use raylib::prelude::*;
 
 use self::{
@@ -71,7 +71,6 @@ pub struct Playfield {
   pub(super) score: u64,
   pub(super) b2b: u16,
   pub(super) message: LineClearMessage,
-  rng: ThreadRng,
 }
 
 impl Playfield {
@@ -86,14 +85,12 @@ impl Playfield {
   const MAX_LOCK_DELAY_FRAMES: u8 = 30;
   const MAX_LOCK_DELAY_MOVES: u8 = 15;
 
-  pub fn new() -> Self {
-    let mut rng = thread_rng();
+  pub fn new(rng: &mut impl Rng) -> Self {
     Self {
       grid: [[Tetromino::Empty; Self::WIDTH]; Self::HEIGHT],
       falling_piece: FallingPiece::new(Tetromino::Empty, Self::PIECE_SPAWN_POSITION),
       holding_piece: Tetromino::Empty,
-      rng: rng.clone(),
-      next_queue: NextQueue::new(&mut rng),
+      next_queue: NextQueue::new(rng),
       can_swap: true,
       frames_since_last_fall: 0,
       lock_delay_frames: 0,
@@ -107,15 +104,15 @@ impl Playfield {
     }
   }
 
-  pub fn restart(&mut self) {
+  pub fn restart(&mut self, rng: &mut impl Rng) {
     let last_score = self.score;
-    *self = Self::new();
+    *self = Self::new(rng);
     self.score = last_score;
   }
 
-  pub fn update(&mut self, rl: &RaylibHandle) -> bool {
+  pub fn update(&mut self, rl: &RaylibHandle, rng: &mut impl Rng) -> bool {
     if rl.is_key_pressed(KeyboardKey::KEY_R) {
-      self.restart();
+      self.restart(rng);
     }
     if self.has_lost {
       return false;
@@ -126,7 +123,7 @@ impl Playfield {
     }
 
     self.update_timers();
-    self.next_queue.push_new_bag_if_needed(&mut self.rng);
+    self.next_queue.push_new_bag_if_needed(rng);
 
     if self.falling_piece.tetromino == Tetromino::Empty {
       let new_tetromino = self.next_queue.get_next_tetromino();

@@ -1,6 +1,7 @@
 mod playfield;
 
 use self::playfield::{falling_piece::*, next_queue::*, *};
+use rand::Rng;
 use raylib::prelude::*;
 
 pub struct Game {
@@ -13,14 +14,14 @@ pub struct Game {
 
 impl Game {
   const HEIGHT_SCALE_FACTOR: f32 = 0.8;
-  pub fn new(rl: &RaylibHandle) -> Self {
+  pub fn new(rl: &RaylibHandle, rng: &mut impl Rng) -> Self {
     let block_length =
       rl.get_screen_height() as f32 * Self::HEIGHT_SCALE_FACTOR / Playfield::VISIBLE_HEIGHT as f32;
     let position = Vector2 {
       x: (rl.get_screen_width() as f32 - block_length * Playfield::WIDTH as f32) / 2.0,
       y: (rl.get_screen_height() as f32 - block_length * Playfield::VISIBLE_HEIGHT as f32) / 2.0,
     };
-    let playfield = Playfield::new();
+    let playfield = Playfield::new(rng);
     let undo_move_stack = vec![playfield.clone()];
     Game {
       block_length,
@@ -31,16 +32,16 @@ impl Game {
     }
   }
 
-  pub fn run(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread) {
+  pub fn run(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread, rng: &mut impl Rng) {
     while !rl.is_key_pressed(KeyboardKey::KEY_ESCAPE) || !self.paused {
-      self.update(rl);
+      self.update(rl, rng);
       self.draw(rl, thread);
     }
 
     let _d = rl.begin_drawing(thread);
   }
 
-  fn update(&mut self, rl: &RaylibHandle) {
+  fn update(&mut self, rl: &RaylibHandle, rng: &mut impl Rng) {
     if rl.is_key_down(KeyboardKey::KEY_LEFT_CONTROL)
       && rl.is_key_pressed(KeyboardKey::KEY_Z)
       && !self.undo_move_stack.is_empty()
@@ -57,7 +58,7 @@ impl Game {
       return;
     }
 
-    if self.playfield.update(rl) {
+    if self.playfield.update(rl, rng) {
       self.undo_move_stack.push(self.playfield.clone());
     }
   }

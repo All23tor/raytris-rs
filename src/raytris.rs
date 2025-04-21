@@ -22,10 +22,11 @@ impl Raytris {
   }
 
   pub fn run(&mut self) {
+    let mut rng = rand::thread_rng();
     let mut menu = Menu::new();
     while menu.run(&mut self.rl, &self.thread) == ExitCode::Game {
-      Game::new(&mut self.rl).run(&mut self.rl, &self.thread);
+      let mut game = Game::new(&mut self.rl, &mut rng);
+      game.run(&mut self.rl, &self.thread, &mut rng);
     }
   }
 }
-

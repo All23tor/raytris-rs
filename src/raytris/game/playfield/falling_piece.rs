@@ -1,4 +1,4 @@
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Tetromino {
   I,
   O,
@@ -10,7 +10,7 @@ pub enum Tetromino {
   Empty,
 }
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Orientation {
   Up,
   Left,
@@ -18,13 +18,13 @@ pub enum Orientation {
   Right,
 }
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Shift {
   Left,
   Right,
 }
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum RotationType {
   Clockwise,
   CounterClockwise,
@@ -66,7 +66,7 @@ impl Tetromino {
   }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub struct FallingPiece {
   pub tetromino: Tetromino,
   pub orientation: Orientation,

@@ -3,7 +3,7 @@ use std::ops::Index;
 use super::falling_piece::Tetromino;
 use rand::{seq::SliceRandom, Rng};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct NextQueue {
   queue: Vec<Tetromino>,
 }

@@ -9,7 +9,7 @@ use self::{
   next_queue::NextQueue,
 };
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum MessageType {
   Single,
   Double,
@@ -19,10 +19,18 @@ pub enum MessageType {
   Empty,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
+enum SpinType {
+  No,
+  Proper,
+  Mini,
+}
+
+#[derive(Clone, Copy, Debug)]
 pub struct LineClearMessage {
   pub message: MessageType,
   pub timer: u8,
+  pub spin_type: SpinType,
 }
 
 impl LineClearMessage {
@@ -32,20 +40,22 @@ impl LineClearMessage {
     Self {
       message: MessageType::Empty,
       timer: 0,
+      spin_type: SpinType::No,
     }
   }
 }
 
 impl From<MessageType> for LineClearMessage {
   fn from(value: MessageType) -> Self {
-    LineClearMessage {
+    Self {
       message: value,
       timer: Self::DURATION,
+      spin_type: SpinType::No,
     }
   }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Playfield {
   pub(super) grid: [[Tetromino; Self::WIDTH]; Self::HEIGHT],
   pub(super) falling_piece: FallingPiece,
@@ -70,52 +80,39 @@ impl Playfield {
   pub const VISIBLE_HEIGHT: usize = 20;
   const PIECE_SPAWN_POSITION: (i8, i8) =
     ((Self::WIDTH - 1) as i8 / 2, Self::VISIBLE_HEIGHT as i8 - 1);
-
-  pub fn new() -> Self {
-    let grid = [[Tetromino::Empty; Self::WIDTH]; Self::HEIGHT];
-    let falling_piece = FallingPiece::new(Tetromino::Empty, Self::PIECE_SPAWN_POSITION);
-    let holding_piece = Tetromino::Empty;
-    let mut rng = thread_rng();
-    let next_queue = NextQueue::new(&mut rng);
-    let can_swap = true;
-    let frames_since_last_fall = 0;
-    let lock_delay_frames = 0;
-    let lock_delay_moves = 0;
-    let signed_frames_pressed = 0;
-    let combo = 0;
-    let has_lost = false;
-    let score = 0;
-    let b2b = 0;
-    let message = LineClearMessage::new();
-
-    Self {
-      grid,
-      falling_piece,
-      holding_piece,
-      next_queue,
-      can_swap,
-      frames_since_last_fall,
-      lock_delay_frames,
-      lock_delay_moves,
-      signed_frames_pressed,
-      combo,
-      has_lost,
-      score,
-      b2b,
-      message,
-      rng,
-    }
-  }
-
-  pub fn restart(&mut self) {
-    *self = Self::new();
-  }
-
   const DAS: u8 = 7;
   const SOFT_DROP_FRAMES: u8 = 1;
   const GRAVITY_FRAMES: u8 = 20;
   const MAX_LOCK_DELAY_FRAMES: u8 = 30;
   const MAX_LOCK_DELAY_MOVES: u8 = 15;
+
+  pub fn new() -> Self {
+    let mut rng = thread_rng();
+    Self {
+      grid: [[Tetromino::Empty; Self::WIDTH]; Self::HEIGHT],
+      falling_piece: FallingPiece::new(Tetromino::Empty, Self::PIECE_SPAWN_POSITION),
+      holding_piece: Tetromino::Empty,
+      rng: rng.clone(),
+      next_queue: NextQueue::new(&mut rng),
+      can_swap: true,
+      frames_since_last_fall: 0,
+      lock_delay_frames: 0,
+      lock_delay_moves: 0,
+      signed_frames_pressed: 0,
+      combo: 0,
+      has_lost: false,
+      score: 0,
+      b2b: 0,
+      message: LineClearMessage::new(),
+    }
+  }
+
+  pub fn restart(&mut self) {
+    let last_score = self.score;
+    *self = Self::new();
+    self.score = last_score;
+  }
+
   pub fn update(&mut self, rl: &RaylibHandle) -> bool {
     if rl.is_key_pressed(KeyboardKey::KEY_R) {
       self.restart();

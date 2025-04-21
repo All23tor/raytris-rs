@@ -36,7 +36,7 @@ pub type OffsetTable = [CoordinatePair; 5];
 pub type TetrominoMap = [CoordinatePair; 4];
 
 impl Tetromino {
-  pub fn initial_tetromino_map(&self) -> TetrominoMap {
+  pub fn initial_tetromino_map(self) -> TetrominoMap {
     use Tetromino::*;
     match self {
       I => [(-1, 0), (0, 0), (1, 0), (2, 0)],
@@ -50,7 +50,7 @@ impl Tetromino {
     }
   }
 
-  pub fn get_tetromino_color(&self) -> raylib::color::Color {
+  pub fn get_tetromino_color(self) -> raylib::color::Color {
     use raylib::color::{rcolor, Color};
     use Tetromino::*;
     match self {

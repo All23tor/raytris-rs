@@ -1,7 +1,7 @@
 use std::ops::Index;
 
-use rand::{seq::SliceRandom, Rng};
 use super::falling_piece::Tetromino;
+use rand::{seq::SliceRandom, Rng};
 
 #[derive(Clone)]
 pub struct NextQueue {
@@ -12,16 +12,20 @@ impl NextQueue {
   pub const SIZE_OF_BAG: usize = 7;
   pub const NEXT_QUEUE_SIZE: usize = 5;
 
-  pub fn new<R>(rng: &mut R) -> Self 
-  where R: Rng + ?Sized {
+  pub fn new<R>(rng: &mut R) -> Self
+  where
+    R: Rng + ?Sized,
+  {
     let queue = vec![];
-    let mut new = Self {queue};
+    let mut new = Self { queue };
     new.push_new_bag(rng);
     new
   }
-  
-  pub fn push_new_bag_if_needed<R>(&mut self, rng: &mut R) 
-  where R: Rng + ?Sized {
+
+  pub fn push_new_bag_if_needed<R>(&mut self, rng: &mut R)
+  where
+    R: Rng + ?Sized,
+  {
     if self.queue.len() < Self::SIZE_OF_BAG {
       self.push_new_bag(rng);
     }
@@ -32,7 +36,9 @@ impl NextQueue {
   }
 
   fn push_new_bag<R>(&mut self, rng: &mut R)
-  where R: Rng + ?Sized {
+  where
+    R: Rng + ?Sized,
+  {
     use super::falling_piece::Tetromino::*;
     let mut bag = vec![I, O, T, S, Z, J, L];
     bag.shuffle(rng);
@@ -47,3 +53,4 @@ impl Index<usize> for NextQueue {
     &self.queue[self.queue.len() - 1 - index]
   }
 }
+

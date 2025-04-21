@@ -4,34 +4,57 @@ pub mod next_queue;
 use rand::{rngs::ThreadRng, thread_rng};
 use raylib::prelude::*;
 
-use self::{falling_piece::{FallingPiece, Tetromino}, next_queue::NextQueue};
+use self::{
+  falling_piece::{FallingPiece, Tetromino},
+  next_queue::NextQueue,
+};
 
 #[derive(Clone, Copy)]
-enum Shift {Left, Right}
+enum Shift {
+  Left,
+  Right,
+}
 
 #[derive(Clone, Copy)]
-enum RotationType {Clockwise, CounterClockwise, OneEighty}
+enum RotationType {
+  Clockwise,
+  CounterClockwise,
+  OneEighty,
+}
 
 #[derive(Clone, Copy)]
-pub enum MessageType {Single, Double, Triple, Tetris, AllClear, Empty}
+pub enum MessageType {
+  Single,
+  Double,
+  Triple,
+  Tetris,
+  AllClear,
+  Empty,
+}
 
 #[derive(Clone, Copy)]
 pub struct LineClearMessage {
   pub message: MessageType,
-  pub timer: u8
+  pub timer: u8,
 }
 
 impl LineClearMessage {
   pub const DURATION: u8 = 180;
 
   pub fn new() -> Self {
-    Self {message: MessageType::Empty, timer: 0}
+    Self {
+      message: MessageType::Empty,
+      timer: 0,
+    }
   }
 }
 
 impl From<MessageType> for LineClearMessage {
   fn from(value: MessageType) -> Self {
-      LineClearMessage{message: value, timer: Self::DURATION}
+    LineClearMessage {
+      message: value,
+      timer: Self::DURATION,
+    }
   }
 }
 
@@ -58,7 +81,8 @@ impl Playfield {
   pub const WIDTH: usize = 10;
   pub const HEIGHT: usize = 40;
   pub const VISIBLE_HEIGHT: usize = 20;
-  const PIECE_SPAWN_POSITION: (i8, i8) = ((Self::WIDTH - 1) as i8 / 2, Self::VISIBLE_HEIGHT as i8 - 1);
+  const PIECE_SPAWN_POSITION: (i8, i8) =
+    ((Self::WIDTH - 1) as i8 / 2, Self::VISIBLE_HEIGHT as i8 - 1);
 
   pub fn new() -> Self {
     let grid = [[Tetromino::Empty; Self::WIDTH]; Self::HEIGHT];
@@ -78,10 +102,21 @@ impl Playfield {
     let message = LineClearMessage::new();
 
     Self {
-      grid, falling_piece, holding_piece, next_queue,
-      can_swap, frames_since_last_fall, lock_delay_frames, lock_delay_moves, signed_frames_pressed,
-      combo, has_lost, score, b2b, message,
-      rng
+      grid,
+      falling_piece,
+      holding_piece,
+      next_queue,
+      can_swap,
+      frames_since_last_fall,
+      lock_delay_frames,
+      lock_delay_moves,
+      signed_frames_pressed,
+      combo,
+      has_lost,
+      score,
+      b2b,
+      message,
+      rng,
     }
   }
 
@@ -151,7 +186,7 @@ impl Playfield {
       self.check_rotation_collision(RotationType::Clockwise);
     } else if rl.is_key_pressed(KeyboardKey::KEY_Z) {
       self.check_rotation_collision(RotationType::CounterClockwise);
-    } else if rl.is_key_pressed(KeyboardKey::KEY_A) {   
+    } else if rl.is_key_pressed(KeyboardKey::KEY_A) {
       self.check_rotation_collision(RotationType::OneEighty);
     };
 
@@ -163,13 +198,13 @@ impl Playfield {
         self.score += 2;
         self.falling_piece.fall();
       }
-  
+
       self.falling_piece = old_piece;
       self.solidify_falling_piece();
       self.lock_delay_moves = 0;
       self.lock_delay_frames = 0;
       self.clear_lines();
-  
+
       return true;
     }
 
@@ -194,19 +229,21 @@ impl Playfield {
         self.falling_piece = old_piece
       }
 
-     return false;
-  }
+      return false;
+    }
 
-  let mut has_piece_solidified = false;
-  self.falling_piece = old_piece;
+    let mut has_piece_solidified = false;
+    self.falling_piece = old_piece;
 
-  if self.lock_delay_frames > Self::MAX_LOCK_DELAY_FRAMES || self.lock_delay_moves > Self::MAX_LOCK_DELAY_MOVES {
-    self.solidify_falling_piece();
-    has_piece_solidified = true;
-    self.clear_lines();
-  }
+    if self.lock_delay_frames > Self::MAX_LOCK_DELAY_FRAMES
+      || self.lock_delay_moves > Self::MAX_LOCK_DELAY_MOVES
+    {
+      self.solidify_falling_piece();
+      has_piece_solidified = true;
+      self.clear_lines();
+    }
 
-  has_piece_solidified
+    has_piece_solidified
   }
 
   fn swap_tetromino(&mut self) {
@@ -239,7 +276,10 @@ impl Playfield {
       let i = pair.0 + self.falling_piece.position.0;
       let j = pair.1 + self.falling_piece.position.1;
 
-      if i < 0 || i >= Playfield::WIDTH as i8 || self.grid[j as usize][i as usize] != Tetromino::Empty {
+      if i < 0
+        || i >= Playfield::WIDTH as i8
+        || self.grid[j as usize][i as usize] != Tetromino::Empty
+      {
         passed_check = false;
         break;
       }
@@ -285,9 +325,13 @@ impl Playfield {
         let i = coordinates.0 + new_horizontal_position;
         let j = coordinates.1 + new_vertical_position;
 
-        if i < 0 || i >= Self::WIDTH as i8 || j >= Self::HEIGHT as i8 || self.grid[j as usize][i as usize] != Tetromino::Empty {
-            passed = false;
-            break;
+        if i < 0
+          || i >= Self::WIDTH as i8
+          || j >= Self::HEIGHT as i8
+          || self.grid[j as usize][i as usize] != Tetromino::Empty
+        {
+          passed = false;
+          break;
         }
       }
 
@@ -325,16 +369,16 @@ impl Playfield {
       let i = pair.0 + self.falling_piece.position.0;
       let j = pair.1 + self.falling_piece.position.1;
       self.grid[j as usize][i as usize] = self.falling_piece.tetromino;
-  
+
       if j as usize >= Self::VISIBLE_HEIGHT {
         passed = true;
       }
     }
-  
+
     let new_tetromino = self.next_queue.get_next_tetromino();
     self.falling_piece = FallingPiece::new(new_tetromino, Self::PIECE_SPAWN_POSITION);
     self.can_swap = true;
-  
+
     for coordinates in &self.falling_piece.tetromino_map {
       let i = coordinates.0 + self.falling_piece.position.0;
       let j = coordinates.1 + self.falling_piece.position.1;
@@ -343,9 +387,9 @@ impl Playfield {
       }
       break;
     }
-  
+
     self.has_lost = !passed;
-  
+
     self.frames_since_last_fall = 0;
     self.lock_delay_frames = 0;
     self.lock_delay_moves = 0;
@@ -361,7 +405,7 @@ impl Playfield {
           break;
         }
       }
-  
+
       if all_true {
         rows_to_clear.push(j);
         if rows_to_clear.len() >= 4 {
@@ -369,25 +413,25 @@ impl Playfield {
         }
       }
     }
-  
+
     let size = rows_to_clear.len();
-  
+
     if size == 0 {
       self.combo = 0;
       return;
     }
-  
+
     if size != 4 {
       self.combo = 0;
     } else {
       self.b2b += 1;
     }
-  
+
     self.combo += 1;
     self.score += self.combo as u64 * 50;
-  
+
     let b2b_factor = if self.b2b >= 2 { 1.5 } else { 1.0 };
-  
+
     if size == 1 {
       self.message = MessageType::Single.into();
       self.score += (100.0 * b2b_factor) as u64;
@@ -401,9 +445,9 @@ impl Playfield {
       self.message = MessageType::Tetris.into();
       self.score += (800.0 * b2b_factor) as u64;
     }
-  
+
     self.clear_rows(&mut rows_to_clear, 0);
-  
+
     if self.is_all_clear() {
       self.message = MessageType::AllClear.into();
       self.score += (3500.0 * b2b_factor) as u64;
@@ -417,20 +461,23 @@ impl Playfield {
 
     let rows_to_clear = row_ids.last().unwrap() + count;
 
-    for row in (1..rows_to_clear+1).rev() {
+    for row in (1..rows_to_clear + 1).rev() {
       self.grid[row] = self.grid[row - 1];
     }
-  
+
     for mino in &mut self.grid[0] {
       *mino = Tetromino::Empty;
     }
-  
+
     row_ids.pop();
     self.clear_rows(row_ids, count + 1);
   }
 
   fn is_all_clear(&self) -> bool {
-    self.grid.iter().all(|row| row.iter().all(|mino| *mino != Tetromino::Empty))
+    self
+      .grid
+      .iter()
+      .all(|row| row.iter().all(|mino| *mino != Tetromino::Empty))
   }
 
   pub fn get_ghost_piece(&self) -> FallingPiece {
@@ -442,7 +489,8 @@ impl Playfield {
       for pair in &ghost_piece.tetromino_map {
         let i = pair.0 + ghost_piece.position.0;
         let j = pair.1 + ghost_piece.position.1;
-        if j > Playfield::HEIGHT as i8 - 1 || self.grid[j as usize][i as usize] != Tetromino::Empty {
+        if j > Playfield::HEIGHT as i8 - 1 || self.grid[j as usize][i as usize] != Tetromino::Empty
+        {
           passed = false;
           break;
         }

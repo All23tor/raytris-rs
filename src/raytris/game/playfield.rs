@@ -5,22 +5,9 @@ use rand::{rngs::ThreadRng, thread_rng};
 use raylib::prelude::*;
 
 use self::{
-  falling_piece::{FallingPiece, Tetromino},
+  falling_piece::{FallingPiece, RotationType, Shift, Tetromino},
   next_queue::NextQueue,
 };
-
-#[derive(Clone, Copy)]
-enum Shift {
-  Left,
-  Right,
-}
-
-#[derive(Clone, Copy)]
-enum RotationType {
-  Clockwise,
-  CounterClockwise,
-  OneEighty,
-}
 
 #[derive(Clone, Copy)]
 pub enum MessageType {
@@ -266,10 +253,7 @@ impl Playfield {
 
   fn shift_falling_piece(&mut self, shift: Shift) -> bool {
     let old_piece = self.falling_piece;
-    match shift {
-      Shift::Left => self.falling_piece.shift_left(),
-      Shift::Right => self.falling_piece.shift_right(),
-    }
+    self.falling_piece.shift(shift);
 
     let mut passed_check = true;
     for pair in &self.falling_piece.tetromino_map {
@@ -300,15 +284,7 @@ impl Playfield {
     let old_piece = self.falling_piece.clone();
     let start_offset_values = self.falling_piece.get_offset_table();
 
-    match rotation_type {
-      RotationType::Clockwise => self.falling_piece.turn_clockwise(),
-      RotationType::CounterClockwise => self.falling_piece.turn_counter_clockwise(),
-      RotationType::OneEighty => {
-        self.falling_piece.turn_clockwise();
-        self.falling_piece.turn_clockwise();
-      }
-    }
-
+    self.falling_piece.turn(rotation_type);
     let end_offset_values = self.falling_piece.get_offset_table();
 
     for offset_number in 0..start_offset_values.len() {
